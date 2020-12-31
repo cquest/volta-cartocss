@@ -14,3 +14,7 @@ Données utilisées:
 - réorganise les données (une table pour toutes les lignes Enedis, une pour les postes)
 - il optimise le stockage (CLUSTER géographique)
 
+## Utilisation dans les éditeurs
+
+- JOSM: tms[20]:http://{switch:a,b,c}.tile.openstreetmap.fr/volta/{zoom}/{x}/{y}.png
+- iD: http://{s}.tile.openstreetmap.fr/volta/{z}/{x}/{y}.png
