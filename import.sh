@@ -2,6 +2,8 @@
 
 PGDATABASE=osm
 
+mkdir -p data && cd data
+
 # données Enedis
 wget -N -nv 'https://www.enedis.fr/contenu-html/opendata/Lignes%20a%C3%A9riennes%20moyenne%20tension%20(HTA).zip'
 wget -N -nv 'https://www.enedis.fr/contenu-html/opendata/Postes%20source%20(postes%20HTBHTA).zip'
