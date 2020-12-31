@@ -106,14 +106,13 @@ Layer:
         (
           SELECT
             ST_LineMerge(ST_Collect(wkb_geometry)) as wkb_geometry,
-            nom_ligne,
             etat,
-            format('%s x %s',nombre_circuit, tension) as libelle
+            regexp_replace(format(E'%s / %s x %s\n%s\n%s\n%s',nom_ligne, nombre_circuit, tension, nom_ouvrage_2, nom_ouvrage_3, nom_ouvrage_4),e'(LIAISON |\n+$)','','g') as libelle
           FROM
             rte_lignes_souterraines
           WHERE
             wkb_geometry && !bbox!
-          GROUP BY 2,3,4
+          GROUP BY 2,3
         ) as rte_lignes_souterraines
 
   - id: rte_lignes_aeriennes
@@ -125,7 +124,7 @@ Layer:
           SELECT
             ST_LineMerge(ST_Collect(wkb_geometry)) as wkb_geometry,
             etat,
-            format('%s / %s x %s',nom_ligne, nombre_circuit, tension) as libelle
+            regexp_replace(format(E'%s / %s x %s\n%s\n%s\n%s\n%s',nom_ligne, nombre_circuit, tension, nom_ouvrage_2, nom_ouvrage_3, nom_ouvrage_4, nom_ouvrage_5),e'(LIAISON |\n+$)','','g') as libelle
           FROM
             rte_lignes_aeriennes
           WHERE
@@ -160,11 +159,12 @@ Layer:
             wkb_geometry,
             numero_pylone,
             case when hauteur_pylone>0 then
-              format('%sm', hauteur_pylone)
+              format(e'%s\n%sm', numero_pylone, hauteur_pylone)
             else
-              ''
+              numero_pylone
             end as libelle
           FROM
             rte_pylones
         ) as rte_pylones
+      geometry_field: wkb_geometry
 

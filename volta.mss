@@ -21,7 +21,6 @@
     }
 }
 
-
 #rte_lignes_aeriennes { 
     ::line {
         line-width: 8;
@@ -34,14 +33,15 @@
         }
     }
 
-    ::text {
+    ::text [zoom < 18] {
         text-name: "[libelle]";
         text-fill: darken(magenta,10%);
         text-face-name: @bold-fonts;
         text-halo-radius: 1.5;
         text-placement: line;
-        text-dy: 6;
+        text-dy: 8;
         text-spacing: 400;
+        text-avoid-edges: true;
     }
 }
 
@@ -58,15 +58,16 @@
         }
     }
 
-    ::text {
+    ::text [zoom < 18] {
         text-name: "[libelle]";
         text-fill: darken(magenta,10%);
         text-face-name: @bold-fonts;
         text-halo-radius: 1.5;
         text-placement: line;
-        text-dy: 5;
+        text-dy: 8;
         text-wrap-width: 50;
         text-spacing: 400;
+        text-avoid-edges: true;
     }
 }
 
@@ -83,11 +84,13 @@
 #rte_pylones {
     marker-fill: black;
     marker-width: 8;
-    text-name: [numero_pylone]+" "+[libelle];
+    text-name: [libelle];
     text-face-name: @book-fonts;
     text-halo-radius: 1.5;
     text-dy: 6;
-    text-wrap-width: 10;
+    text-placement-type: simple;
+    text-placements: S,E,W,SE,SW;
+    text-avoid-edges: true;
 }
 
 #ore_distributeurs {
