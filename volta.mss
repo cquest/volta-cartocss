@@ -35,19 +35,13 @@
     }
 
     ::text {
-        text-name: "[nom_ligne]";
+        text-name: "[libelle]";
         text-fill: darken(magenta,10%);
         text-face-name: @bold-fonts;
         text-halo-radius: 1.5;
         text-placement: line;
-        text-dy: 5;
-        text-wrap-width: 50;
-        b/text-name: "[libelle]";
-        b/text-fill: darken(magenta,10%);
-        b/text-face-name: @bold-fonts;
-        b/text-halo-radius: 1.5;
-        b/text-placement: line;
-        b/text-dy: -5;
+        text-dy: 6;
+        text-spacing: 400;
     }
 }
 
@@ -65,19 +59,14 @@
     }
 
     ::text {
-        text-name: "[nom_ligne]";
+        text-name: "[libelle]";
         text-fill: darken(magenta,10%);
         text-face-name: @bold-fonts;
         text-halo-radius: 1.5;
         text-placement: line;
         text-dy: 5;
         text-wrap-width: 50;
-        b/text-name: "[libelle]";
-        b/text-fill: darken(magenta,10%);
-        b/text-face-name: @bold-fonts;
-        b/text-halo-radius: 1.5;
-        b/text-placement: line;
-        b/text-dy: -5;
+        text-spacing: 400;
     }
 }
 
@@ -94,14 +83,11 @@
 #rte_pylones {
     marker-fill: black;
     marker-width: 8;
-    text-name: "[numero_pylone]";
-    text-face-name: @bold-fonts;
+    text-name: [numero_pylone]+" "+[libelle];
+    text-face-name: @book-fonts;
     text-halo-radius: 1.5;
-    text-dy: -6;
-    b/text-name: "[libelle]";
-    b/text-face-name: @bold-fonts;
-    b/text-halo-radius: 1.5;
-    b/text-dy: 6;
+    text-dy: 6;
+    text-wrap-width: 10;
 }
 
 #ore_distributeurs {

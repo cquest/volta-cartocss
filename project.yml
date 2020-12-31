@@ -30,7 +30,7 @@ _parts:
     srs: "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
   db: &db
     type: "postgis"
-    dbname: "cquest"
+    dbname: "osm"
     host: "localhost"
     user: "fr"
     password: m4d31nfr4nc3
@@ -106,7 +106,7 @@ Layer:
       table: >-
         (
           SELECT
-            ST_Collect(wkb_geometry) as wkb_geometry,
+            ST_LineMerge(ST_Collect(wkb_geometry)) as wkb_geometry,
             nom_ligne,
             etat,
             format('%s x %s',nombre_circuit, tension) as libelle
@@ -124,15 +124,14 @@ Layer:
       table: >-
         (
           SELECT
-            ST_Union(wkb_geometry) as wkb_geometry,
-            nom_ligne,
+            ST_LineMerge(ST_Collect(wkb_geometry)) as wkb_geometry,
             etat,
-            format('%s x %s',nombre_circuit, tension) as libelle
+            format('%s / %s x %s',nom_ligne, nombre_circuit, tension) as libelle
           FROM
             rte_lignes_aeriennes
           WHERE
             wkb_geometry && !bbox!
-          GROUP BY 2,3,4
+          GROUP BY 2,3
         ) as rte_lignes_aeriennes
 
   # Ponctuel
@@ -162,7 +161,7 @@ Layer:
             wkb_geometry,
             numero_pylone,
             case when hauteur_pylone>0 then
-              format('(%sm)', hauteur_pylone)
+              format('%sm', hauteur_pylone)
             else
               ''
             end as libelle
