@@ -1,0 +1,172 @@
+bounds: &world
+  - -180
+  - -85.05112877980659
+  - 180
+  - 85.05112877980659
+center:
+  - 3.4018
+  - 47.8511
+  - 18
+format: png8
+interactivity: false
+minzoom: 6
+maxzoom: 20
+
+scale: 1
+metatile: 8
+name: volta-cartocss
+description: ''
+attribution: 'data source: Enedis'
+
+# Various parts to be included later on
+_parts:
+  extents: &extents
+    extent: *world
+    srs-name: "3857"
+    srs: "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0.0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over"
+  extents84: &extents84
+    extent: *world
+    srs-name: "WGS84"
+    srs: "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+  db: &db
+    type: "postgis"
+    dbname: "cquest"
+    host: "localhost"
+    user: "fr"
+    password: m4d31nfr4nc3
+    geometry_field: "wkb_geometry"
+    extent: *world
+    srid: 4326
+    asynchronous_request: 'true'
+    max_async_connection: '4'
+
+
+Stylesheet:
+  - style.mss
+  - volta.mss
+
+Layer:
+  # Surfacique
+  - id: rte_enceintes_de_poste
+    properties:
+      minzoom: 14
+    <<: *extents84
+    Datasource:
+      <<: *db
+      table: >-
+        (
+          SELECT
+            wkb_geometry,
+            nom_poste
+          FROM
+            rte_enceintes_de_poste
+        ) as rte_enceintes_de_poste
+
+  - id: ore_distributeurs
+    <<: *extents84
+    properties:
+      minzoom: 14
+    Datasource:
+      <<: *db
+      table: >-
+        (
+          SELECT
+            c.wkb_geometry,
+            grd_elec,
+            commune
+          FROM
+            communes c 
+          JOIN
+            ore_distributeurs d
+          ON (insee=code_insee_commune)
+          WHERE
+            c.wkb_geometry && !bbox!
+        ) as rte_enceintes_de_poste
+
+  # Linéaire
+  - id: enedis_lignes
+    properties:
+      minzoom: 14
+    <<: *extents84
+    Datasource:
+      <<: *db
+      table: >-
+        (
+          SELECT
+            *
+          FROM
+            enedis_lignes
+        ) as enedis_lignes
+      geometry_field: geom
+
+  - id: rte_lignes_souterrainnes
+    <<: *extents84
+    Datasource:
+      <<: *db
+      table: >-
+        (
+          SELECT
+            ST_Collect(wkb_geometry) as wkb_geometry,
+            nom_ligne,
+            etat,
+            format('%s x %s',nombre_circuit, tension) as libelle
+          FROM
+            rte_lignes_souterraines
+          WHERE
+            wkb_geometry && !bbox!
+          GROUP BY 2,3,4
+        ) as rte_lignes_souterraines
+
+  - id: rte_lignes_aeriennes
+    <<: *extents84
+    Datasource:
+      <<: *db
+      table: >-
+        (
+          SELECT
+            ST_Union(wkb_geometry) as wkb_geometry,
+            nom_ligne,
+            etat,
+            format('%s x %s',nombre_circuit, tension) as libelle
+          FROM
+            rte_lignes_aeriennes
+          WHERE
+            wkb_geometry && !bbox!
+          GROUP BY 2,3,4
+        ) as rte_lignes_aeriennes
+
+  # Ponctuel
+  - id: enedis_postes
+    properties:
+      minzoom: 14
+    <<: *extents84
+    Datasource:
+      <<: *db
+      table: >-
+        (
+          SELECT
+            *
+          FROM
+            enedis_postes
+        ) as enedis_postes
+
+  - id: rte_pylones
+    properties:
+      minzoom: 14
+    <<: *extents84
+    Datasource:
+      <<: *db
+      table: >-
+        (
+          SELECT
+            wkb_geometry,
+            numero_pylone,
+            case when hauteur_pylone>0 then
+              format('(%sm)', hauteur_pylone)
+            else
+              ''
+            end as libelle
+          FROM
+            rte_pylones
+        ) as rte_pylones
+
