@@ -63,7 +63,7 @@ Layer:
         ) as rte_enceintes_de_poste
 
   - id: ore_distributeurs
-    <<: *extents84
+    <<: *extents
     properties:
       minzoom: 14
     Datasource:
@@ -71,17 +71,16 @@ Layer:
       table: >-
         (
           SELECT
-            c.wkb_geometry,
+            way,
             grd_elec,
             commune
           FROM
-            communes c 
+            osm_communes c
           JOIN
             ore_distributeurs d
           ON (insee=code_insee_commune)
-          WHERE
-            c.wkb_geometry && !bbox!
-        ) as rte_enceintes_de_poste
+        ) as ore_distributeurs
+      geometry_field: way
 
   # Linéaire
   - id: enedis_lignes
