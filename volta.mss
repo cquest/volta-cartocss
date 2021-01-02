@@ -1,7 +1,7 @@
 @bt-color: #6d0;
 @ht-color: magenta;
-@rte-color: darken(magenta, 15%);
-
+@rte-color: #2C75FF;
+@htbt-color: yellow;
 
 #enedis_lignes { 
     line-width: 4;
@@ -21,7 +21,7 @@
 
 #enedis_postes {
     marker-width: 8;
-    marker-fill: blue;
+    marker-fill: @htbt-color;
     [ source = true ] {
         marker-width: 24;
     }
