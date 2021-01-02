@@ -60,6 +60,7 @@
         b/line-width: 0.5;
         [ etat != 'EN EXPLOITATION' ] {
             line-opacity: 0.5;
+            line-dasharray: 1,20;
         }
     }
 
@@ -70,7 +71,6 @@
         text-halo-radius: 1.5;
         text-placement: line;
         text-dy: 8;
-        text-wrap-width: 50;
         text-spacing: 400;
         text-avoid-edges: true;
     }
