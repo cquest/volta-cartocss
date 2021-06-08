@@ -83,6 +83,23 @@ Layer:
       geometry_field: way
 
   # Linéaire
+  - id: enedis_lignes_lz
+    properties:
+      minzoom: 11
+      maxzoom: 13
+    <<: *extents84
+    Datasource:
+      <<: *db
+      table: >-
+        (
+          SELECT
+            *
+          FROM
+            enedis_lignes
+          WHERE ht and not underground
+        ) as enedis_lignes_lz
+      geometry_field: geom
+
   - id: enedis_lignes
     properties:
       minzoom: 14
