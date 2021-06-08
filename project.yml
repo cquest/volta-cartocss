@@ -164,6 +164,20 @@ Layer:
             enedis_postes
         ) as enedis_postes
 
+  - id: enedis_pole
+    properties:
+      minzoom: 16
+    <<: *extents84
+    Datasource:
+      <<: *db
+      table: >-
+        (
+          SELECT
+            *
+          FROM
+            enedis_pole
+        ) as enedis_pole
+
   - id: rte_pylones
     properties:
       minzoom: 14

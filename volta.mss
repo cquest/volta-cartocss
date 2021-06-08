@@ -33,6 +33,11 @@
     }
 }
 
+#enedis_pole {
+    marker-width: 6;
+    marker-fill: white;
+}
+
 #rte_lignes_aeriennes { 
     ::line {
         line-width: 8;
