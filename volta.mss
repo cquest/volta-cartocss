@@ -3,6 +3,12 @@
 @rte-color: #2C75FF;
 @htbt-color: yellow;
 
+#enedis_lignes_lz {
+    line-width: 3;
+    line-color: @ht-color;
+    line-join: round;
+}
+
 #enedis_lignes { 
     line-width: 4;
     line-color: @bt-color;
