@@ -164,6 +164,23 @@ Layer:
             enedis_postes
         ) as enedis_postes
 
+  - id: enedis_pole_hta
+    properties:
+      minzoom: 18
+    <<: *extents84
+    Datasource:
+      <<: *db
+      table: >-
+        (
+          SELECT
+            (st_dump(st_points(geom))).geom as pole
+          FROM
+            enedis_lignes
+          WHERE geom && !bbox!
+          AND ht and not underground
+        ) as enedis_pole_hta
+      geometry_field: pole
+
   - id: enedis_pole
     properties:
       minzoom: 16
