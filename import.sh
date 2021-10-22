@@ -4,12 +4,48 @@ PGDATABASE=osm
 
 mkdir -p data && cd data
 
+
+# données agrégées ORE
+wget -N -nv http://files.opendatarchives.fr/opendata.agenceore.fr/reseau-aerien-basse-tension-bt.geojson.gz
+wget -N -nv http://files.opendatarchives.fr/opendata.agenceore.fr/reseau-aerien-moyenne-tension-hta.geojson.gz
+wget -N -nv http://files.opendatarchives.fr/opendata.agenceore.fr/reseau-souterrain-basse-tension-bt.csv.gz
+wget -N -nv http://files.opendatarchives.fr/opendata.agenceore.fr/reseau-souterrain-moyenne-tension-hta.geojson.gz
+
+for RESEAU in reseau*.geojson.gz
+do
+    PG_USE_COPY=yes ogr2ogr -f pgdump /vsistdout/ "/vsigzip/$RESEAU" \
+      -lco SPATIAL_INDEX=none -nln $(basename -s .geojson.gz $RESEAU)| psql
+done
+
+zcat reseau-souterrain-basse-tension-bt.csv.gz | psql -c "CREATE TABLE reseau_souterrain_basse_tension_bt (geo_point text, geo_shape text, positio text, tension text, nom_grd text, code_insee text);
+COPY reseau_souterrain_basse_tension_bt FROM STDIN WITH (format CSV, header true, delimiter ';');
+"
+
+# agrégation données BT/HTA ORE
+psql -c "CREATE TABLE IF NOT EXISTS volta_lignes (geom geometry(Geometry,4326), ht boolean, underground boolean, operator text, tension text)
+TRUNCATE volta_lignes;
+INSERT INTO volta_lignes select wkb_geometry,false as ht, false as underground, nom_grd as operator, tension from reseau_aerien_basse_tension_bt;
+INSERT INTO volta_lignes select ST_GeomFromGeoJSON(geo_shape),false as ht, true  as underground, nom_grd as operator, tension from reseau_souterrain_basse_tension_bt;
+INSERT INTO volta_lignes select wkb_geometry,true  as ht, false as underground, nom_grd as operator, tension from reseau_aerien_moyenne_tension_hta;
+INSERT INTO volta_lignes select wkb_geometry,true  as ht, true  as underground, nom_grd as operator, tension from reseau_souterrain_moyenne_tension_hta;
+
+DROP TABLE reseau_aerien_basse_tension_bt;
+DROP TABLE reseau_souterrain_basse_tension_bt;
+DROP TABLE reseau_aerien_moyenne_tension_hta;
+DROP TABLE reseau_souterrain_moyenne_tension_hta;
+"
+
+psql -c "
+CREATE INDEX IF NOT EXISTS volta_lignes_geom ON volta_lignes USING GIST (geom);
+CLUSTER volta_lignes USING volta_lignes_geom
+" &
+
+wget -N -nv http://files.opendatarchives.fr/opendata.agenceore.fr/distributeurs-denergie-par-commune.geojson.gz
+zcat distributeurs-denergie-par-commune.geojson.gz | PG_USE_COPY=yes ogr2ogr -f pgdump /vsistdout/ /vsistdin/ -nln ore_distributeurs | psql
+
+
 # données Enedis
-wget -N -nv 'https://www.enedis.fr/contenu-html/opendata/Lignes%20a%C3%A9riennes%20moyenne%20tension%20(HTA).zip'
 wget -N -nv 'https://www.enedis.fr/contenu-html/opendata/Postes%20source%20(postes%20HTBHTA).zip'
-wget -N -nv 'https://www.enedis.fr/contenu-html/opendata/Lignes%20a%C3%A9riennes%20Basse%20Tension%20(BT).zip'
-wget -N -nv 'https://www.enedis.fr/contenu-html/opendata/Lignes%20souterraines%20Basse%20Tension%20(BT).zip'
-wget -N -nv 'https://www.enedis.fr/contenu-html/opendata/Lignes%20souterraines%20moyenne%20tension%20(HTA).zip'
 wget -N -nv 'https://www.enedis.fr/contenu-html/opendata/Postes%20de%20distribution%20publique%20(postes%20HTABT).zip'
 for ENEDIS in *.zip
 do
@@ -17,23 +53,8 @@ do
       -s_srs EPSG:2154 -t_SRS EPSG:4326 -lco SPATIAL_INDEX=none | psql
 done
 
-# regroupement des données (lignes et postes)
-psql -c "CREATE TABLE enedis_lignes (geom geometry, ht boolean, underground boolean, operator text)"
-for N in $(seq 0 9)
-do
-  psql -c "
-    INSERT INTO enedis_lignes (select wkb_geometry, false, false, 'Enedis' from \"e_tronçon_aérien_bt_dpt_$N\");
-    DROP TABLE \"e_tronçon_aérien_bt_dpt_$N\";
-    INSERT INTO enedis_lignes (select wkb_geometry, false, true, 'Enedis' from \"e_tronçon_câble_bt_dpt_$N\");
-    DROP TABLE \"e_tronçon_câble_bt_dpt_$N\";
-  "
-done
+# regroupement des données (postes)
 psql -c "
-    INSERT INTO enedis_lignes (select wkb_geometry, true, false, 'Enedis' from tronconaerienhta_me_position);
-    INSERT INTO enedis_lignes (select wkb_geometry, true, true, 'Enedis' from tronconcablehta_me_position);
-    DROP TABLE tronconaerienhta_me_position;
-    DROP TABLE tronconcablehta_me_position;
-
     ALTER TABLE poste_electrique RENAME TO enedis_postes;
     ALTER TABLE enedis_postes add column source boolean;
     ALTER TABLE enedis_postes add column operator text;
@@ -42,8 +63,10 @@ psql -c "
     DROP TABLE poste_source;
     CREATE INDEX ON enedis_postes USING gist(wkb_geometry);
 "
-psql -c "CREATE INDEX enedis_lignes_geom_idx ON enedis_lignes USING gist(geom); CLUSTER enedis_lignes USING enedis_lignes_geom_idx" &
 psql -c "CLUSTER enedis_postes USING poste_electrique_wkb_geometry_geom_idx" &
+
+
+
 
 # données RTE
 wget -N -nv http://files.opendatarchives.fr/opendata.reseaux-energies.fr/enceintes-de-poste-rte.geojson.gz
@@ -56,14 +79,14 @@ for RTE in *rte.geojson.gz
 do
   T="rte_$(echo $RTE | sed 's/-/_/g;s/_rte.geojson.gz//')"
   zcat $RTE | PG_USE_COPY=yes ogr2ogr -f pgdump /vsistdout/ /vsistdin/ -nln $T | psql
-  psql -c "ALTER TABLE $t drop column ogc_fid;"
+  psql -c "ALTER TABLE $T drop column ogc_fid;"
   psql -c "CLUSTER $T USING "$T"_wkb_geometry_geom_idx" &
 done
+wait
 
+psql -c "GRANT SELECT ON ALL TABLES IN SCHEMA public TO public;"
 
-# données ORE
-wget -N -nv http://files.opendatarchives.fr/opendata.agenceore.fr/distributeurs-denergie-par-commune.geojson.gz
-zcat distributeurs-denergie-par-commune.geojson.gz | PG_USE_COPY=yes ogr2ogr -f pgdump /vsistdout/ /vsistdin/ -nln ore_distributeurs | psql
+exit
 
 
 

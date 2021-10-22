@@ -16,7 +16,7 @@ scale: 1
 metatile: 8
 name: volta-cartocss
 description: ''
-attribution: 'data source: Enedis'
+attribution: 'data source: ORE/RTE'
 
 # Various parts to be included later on
 _parts:
@@ -83,7 +83,7 @@ Layer:
       geometry_field: way
 
   # Linéaire
-  - id: enedis_lignes_lz
+  - id: volta_lignes_lz
     properties:
       minzoom: 11
       maxzoom: 13
@@ -95,12 +95,12 @@ Layer:
           SELECT
             *
           FROM
-            enedis_lignes
+            volta_lignes
           WHERE ht and not underground
-        ) as enedis_lignes_lz
+        ) as volta_lignes_lz
       geometry_field: geom
 
-  - id: enedis_lignes
+  - id: volta_lignes
     properties:
       minzoom: 14
     <<: *extents84
@@ -111,8 +111,8 @@ Layer:
           SELECT
             *
           FROM
-            enedis_lignes
-        ) as enedis_lignes
+            volta_lignes
+        ) as volta_lignes
       geometry_field: geom
 
   - id: rte_lignes_souterrainnes
@@ -164,7 +164,7 @@ Layer:
             enedis_postes
         ) as enedis_postes
 
-  - id: enedis_pole_hta
+  - id: volta_pole_hta
     properties:
       minzoom: 18
     <<: *extents84
@@ -175,10 +175,10 @@ Layer:
           SELECT
             (st_dump(st_points(geom))).geom as pole
           FROM
-            enedis_lignes
+            volta_lignes
           WHERE geom && !bbox!
           AND ht and not underground
-        ) as enedis_pole_hta
+        ) as volta_pole_hta
       geometry_field: pole
 
   - id: enedis_pole
