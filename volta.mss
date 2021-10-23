@@ -23,6 +23,16 @@
         b/line-width: 0.5;
         b/line-color: black;
     }
+
+    ::text [zoom >= 16][pixels>150] {
+        text-name: "[operator]";
+        text-face-name: @book-fonts;
+        text-halo-radius: 1.25;
+        text-placement: line;
+        text-spacing: 800;
+        text-avoid-edges: true;
+    }
+
 }
 
 #enedis_postes {

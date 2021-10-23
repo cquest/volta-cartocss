@@ -110,7 +110,8 @@ Layer:
       table: >-
         (
           SELECT
-            *
+            *,
+            ST_Length(geom)/!pixel_width! as pixels
           FROM
             volta_lignes
         ) as volta_lignes
