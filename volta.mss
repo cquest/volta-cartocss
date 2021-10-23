@@ -38,12 +38,10 @@
     marker-fill: white;
 }
 
-#enedis_pole_hta {
-    ::alpha {
-        marker-comp-op: contrast;
-        marker-width: 20;
-        marker-fill: black;
-    }
+#volta_pole_hta {
+    marker-comp-op: contrast;
+    marker-width: 20;
+    marker-fill: black;
 }
 
 #rte_lignes_aeriennes { 

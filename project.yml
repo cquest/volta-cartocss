@@ -16,7 +16,7 @@ scale: 1
 metatile: 8
 name: volta-cartocss
 description: ''
-attribution: 'data source: ORE/RTE'
+attribution: 'data source: ORE/Enedis/RTE'
 
 # Various parts to be included later on
 _parts:
