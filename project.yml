@@ -102,6 +102,7 @@ Layer:
 
   - id: volta_lignes
     properties:
+      cache-features: on
       minzoom: 14
     <<: *extents84
     Datasource:
@@ -116,6 +117,8 @@ Layer:
       geometry_field: geom
 
   - id: rte_lignes_souterrainnes
+    properties:
+      cache-features: on
     <<: *extents84
     Datasource:
       <<: *db
@@ -133,6 +136,8 @@ Layer:
         ) as rte_lignes_souterraines
 
   - id: rte_lignes_aeriennes
+    properties:
+      cache-features: on
     <<: *extents84
     Datasource:
       <<: *db
@@ -183,6 +188,7 @@ Layer:
 
   - id: enedis_pole
     properties:
+      cache-features: on
       minzoom: 16
     <<: *extents84
     Datasource:
@@ -197,6 +203,7 @@ Layer:
 
   - id: rte_pylones
     properties:
+      cache-features: on
       minzoom: 14
     <<: *extents84
     Datasource:
