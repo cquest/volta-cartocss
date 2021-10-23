@@ -217,7 +217,7 @@ Layer:
             case when hauteur_pylone>0 then
               format(e'%s\n%sm', numero_pylone, hauteur_pylone)
             else
-              numero_pylone
+              numero_pylone::text
             end as libelle
           FROM
             rte_pylones
