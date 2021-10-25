@@ -156,7 +156,7 @@ Layer:
         ) as rte_lignes_aeriennes
 
   # Ponctuel
-  - id: enedis_postes
+  - id: volta_postes
     properties:
       minzoom: 14
     <<: *extents84
@@ -167,8 +167,9 @@ Layer:
           SELECT
             *
           FROM
-            enedis_postes
-        ) as enedis_postes
+            volta_postes
+        ) as volta_postes
+      geometry_field: geom
 
   - id: volta_pole_hta
     properties:

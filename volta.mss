@@ -35,11 +35,20 @@
 
 }
 
-#enedis_postes {
+#volta_postes {
     marker-width: 8;
     marker-fill: @htbt-color;
-    [ source = true ] {
-        marker-width: 24;
+    ::text [zoom >= 18] {
+        text-name: "[operator]";
+        text-face-name: @book-fonts;
+        text-halo-radius: 1.25;
+        text-dx: 8;
+        text-dy: 2;
+        b/text-name: "[nom]";
+        b/text-face-name: @book-fonts;
+        b/text-halo-radius: 1.25;
+        b/text-dx: 8;
+        b/text-dy: -2;
     }
 }
 

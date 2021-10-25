@@ -6,10 +6,11 @@ mkdir -p data && cd data
 
 
 # données agrégées ORE
-wget -N -nv http://files.opendatarchives.fr/opendata.agenceore.fr/reseau-aerien-basse-tension-bt.geojson.gz
+wget -N -nv http://files.opendatarchives.fr/opendata.agenceore.fr/reseau-aerien-basse-tension-bt.csv.gz
 wget -N -nv http://files.opendatarchives.fr/opendata.agenceore.fr/reseau-aerien-moyenne-tension-hta.geojson.gz
 wget -N -nv http://files.opendatarchives.fr/opendata.agenceore.fr/reseau-souterrain-basse-tension-bt.csv.gz
 wget -N -nv http://files.opendatarchives.fr/opendata.agenceore.fr/reseau-souterrain-moyenne-tension-hta.geojson.gz
+wget -N -nv http://files.opendatarchives.fr/opendata.agenceore.fr/postes-de-distribution-publique-postes-htabt.csv.gz
 
 for RESEAU in reseau*.geojson.gz
 do
@@ -17,27 +18,44 @@ do
       -lco SPATIAL_INDEX=none -nln $(basename -s .geojson.gz $RESEAU)| psql
 done
 
-zcat reseau-souterrain-basse-tension-bt.csv.gz | psql -c "CREATE TABLE reseau_souterrain_basse_tension_bt (geo_point text, geo_shape text, positio text, tension text, nom_grd text, code_insee text);
+zcat reseau-souterrain-basse-tension-bt.csv.gz | psql -c "
+CREATE TABLE IF NOT EXISTS reseau_souterrain_basse_tension_bt (geo_point text, geo_shape text, positio text, tension text, nom_grd text, code_insee text);
+TRUNCATE reseau_souterrain_basse_tension_bt;
 COPY reseau_souterrain_basse_tension_bt FROM STDIN WITH (format CSV, header true, delimiter ';');
+"
+zcat reseau-aerien-basse-tension-bt.csv.gz | psql -c "
+CREATE TABLE IF NOT EXISTS reseau_aerien_basse_tension_bt (geo_point text, geo_shape text, positio text, tension text, nom_grd text, code_insee text);
+TRUNCATE reseau_aerien_basse_tension_bt;
+COPY reseau_aerien_basse_tension_bt FROM STDIN WITH (format CSV, header true, delimiter ';');
+"
+
+zcat postes-de-distribution-publique-postes-htabt.csv.gz | psql -c "
+CREATE TABLE IF NOT EXISTS ore_postes (geo_point text, geo_shape text, nom text, operator text, code_insee text);
+TRUNCATE ore_postes;
+COPY ore_postes FROM STDIN WITH (format CSV, header true, delimiter ';');
+
+CREATE TABLE IF NOT EXISTS volta_postes (geom geometry(Geometry,4326), nom text, operator text);
+TRUNCATE volta_postes;
+INSERT INTO volta_postes SELECT ST_GeomFromGeoJSON(geo_shape), nom, operator FROM ore_postes ORDER BY ST_GeomFromGeoJSON(geo_shape);
+CREATE INDEX IF NOT EXISTS volta_postes_geom ON volta_postes USING GIST (geom);
+DROP TABLE ore_postes;
 "
 
 # agrégation données BT/HTA ORE
-psql -c "CREATE TABLE IF NOT EXISTS volta_lignes (geom geometry(Geometry,4326), ht boolean, underground boolean, operator text, tension text)
+psql -c "
+CREATE TABLE IF NOT EXISTS volta_lignes (geom geometry(Geometry,4326), ht boolean, underground boolean, operator text, tension text);
 TRUNCATE volta_lignes;
-INSERT INTO volta_lignes select wkb_geometry,false as ht, false as underground, nom_grd as operator, tension from reseau_aerien_basse_tension_bt;
-INSERT INTO volta_lignes select ST_GeomFromGeoJSON(geo_shape),false as ht, true  as underground, nom_grd as operator, tension from reseau_souterrain_basse_tension_bt;
-INSERT INTO volta_lignes select wkb_geometry,true  as ht, false as underground, nom_grd as operator, tension from reseau_aerien_moyenne_tension_hta;
-INSERT INTO volta_lignes select wkb_geometry,true  as ht, true  as underground, nom_grd as operator, tension from reseau_souterrain_moyenne_tension_hta;
+INSERT INTO volta_lignes select ST_GeomFromGeoJSON(geo_shape),false as ht, false as underground, nom_grd as operator, tension from reseau_aerien_basse_tension_bt ORDER BY ST_GeomFromGeoJSON(geo_shape);
+INSERT INTO volta_lignes select ST_GeomFromGeoJSON(geo_shape),false as ht, true  as underground, nom_grd as operator, tension from reseau_souterrain_basse_tension_bt ORDER BY ST_GeomFromGeoJSON(geo_shape);
+INSERT INTO volta_lignes select wkb_geometry,true  as ht, false as underground, nom_grd as operator, tension from reseau_aerien_moyenne_tension_hta ORDER BY wkb_geometry;
+INSERT INTO volta_lignes select wkb_geometry,true  as ht, true  as underground, nom_grd as operator, tension from reseau_souterrain_moyenne_tension_hta ORDER BY wkb_geometry;
 
 DROP TABLE reseau_aerien_basse_tension_bt;
 DROP TABLE reseau_souterrain_basse_tension_bt;
 DROP TABLE reseau_aerien_moyenne_tension_hta;
 DROP TABLE reseau_souterrain_moyenne_tension_hta;
-"
 
-psql -c "
 CREATE INDEX IF NOT EXISTS volta_lignes_geom ON volta_lignes USING GIST (geom);
-CLUSTER volta_lignes USING volta_lignes_geom
 " &
 
 wget -N -nv http://files.opendatarchives.fr/opendata.agenceore.fr/distributeurs-denergie-par-commune.geojson.gz
